@@ -1,0 +1,23 @@
+<idea-plugin>
+    <id>org.viw.AdIntegrationPro</id>
+    <name>Ad Integration Pro</name>
+    <version>1.0.0</version>
+    <vendor email="chaudharysantosh03k@gmail.com">Santosh Kumar Chaudhary</vendor>
+
+    <description>
+        Ad Integration Pro is a professional IntelliJ/Android Studio plugin designed to simplify and streamline
+        the integration of ads into your Android projects.
+    </description>
+
+    <!-- Plugin listing icon (Plugins page) -->
+    <depends>com.intellij.modules.platform</depends>
+
+    <actions>
+        <action id="AdSetupWizardAction"
+                class="org.viw.adintegrationpro.AdSetupWizardAction"
+                text="Ad Integration Assistant"
+                description="Step-by-step wizard to integrate ads into your Android project">
+            <add-to-group group-id="ToolsMenu" anchor="last"/>
+        </action>
+    </actions>
+</idea-plugin>
