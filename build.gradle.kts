@@ -5,10 +5,11 @@ plugins {
 }
 
 group = "org.viw"
-version = "1.0.1"
+version = "1.1.1"
 
 repositories {
     mavenCentral()
+    google()
     intellijPlatform {
         defaultRepositories()
     }

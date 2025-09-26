@@ -1,13 +1,68 @@
 <idea-plugin>
     <id>org.viw.AdIntegrationPro</id>
     <name>Ad Integration Pro</name>
-    <version>1.0.0</version>
-    <vendor email="chaudharysantosh03k@gmail.com">Santosh Kumar Chaudhary</vendor>
+    <version>1.1.1</version>
+    <vendor email="chaudharysantosh03k@gmail.com" url="https://nishant01k.github.io/Ad-Integration-Pro/">Santosh Kumar Chaudhary</vendor>
 
-    <description>
-        Ad Integration Pro is a professional IntelliJ/Android Studio plugin designed to simplify and streamline
-        the integration of ads into your Android projects.
-    </description>
+    <description><![CDATA[
+        <h2 style="margin-top:0;">Ad Integration Pro</h2>
+        <p><b>Ad Integration Pro</b> makes adding ads to your Android apps fast, simple, and error-free.
+        No more manual Gradle edits, Manifest tweaks, or endless copy-pasting SDK code —
+        this plugin automates the entire setup process.</p>
+
+        <h3>Features</h3>
+        <ul>
+            <li><b>Multi-provider support:</b> Google AdMob, Unity Ads, Facebook Audience, IronSource</li>
+            <li><b>Ad formats:</b> Banner, Interstitial, Rewarded, Native</li>
+            <li><b>Automatic setup:</b> Gradle dependencies &amp; AndroidManifest updated</li>
+            <li><b>Helper class:</b> <code>AdHelper.java</code> / <code>AdHelper.kt</code></li>
+            <li><b>Smart detection:</b> Generates Java or Kotlin code automatically</li>
+            <li><b>Boilerplate methods included:</b> initAds(), showBanner(), showInterstitial(), showRewarded(), showNative()</li>
+        </ul>
+
+        <h3>How It Works</h3>
+        <ol>
+            <li>Open your Android project</li>
+            <li>Go to <b>Tools → Ad Integration Assistant</b></li>
+            <li>Select your ad provider</li>
+            <li>Choose the ad formats</li>
+            <li>Click OK — your project is ready</li>
+        </ol>
+
+        <h3>Why Choose Ad Integration Pro?</h3>
+        <ul>
+            <li>Eliminates hours of manual setup</li>
+            <li>Reduces common integration errors</li>
+            <li>Works seamlessly with Java and Kotlin</li>
+            <li>Auto-generates clean and reusable helper classes</li>
+        </ul>
+
+        <h3>Example Usage</h3>
+        <pre><code>
+        val adHelper = AdHelper(this)
+        adHelper.initAds()
+        adHelper.showBanner(this)
+        </code></pre>
+
+        <h3>Requirements</h3>
+        <ul>
+            <li>Android Studio / IntelliJ IDEA 2023.1 or later</li>
+            <li>Minimum Android SDK 21</li>
+        </ul>
+
+        <h3>Support</h3>
+        <p>If you need help or want to suggest new ad networks, contact:
+        <a href="mailto:chaudharysantosh03k@gmail.com">chaudharysantosh03k@gmail.com</a></p>
+
+        <h3>Tags</h3>
+        <p>android, ads, admob, monetization, unity, facebook, ironsource, plugin, kotlin, java</p>
+
+        <h3>License</h3>
+        <p>Apache 2.0</p>
+
+       <h3>Documentation</h3>
+        <a href="https://nishant01k.github.io/Ad-Integration-Pro/">Documentation</a></p>
+    ]]></description>
 
     <!-- Plugin listing icon (Plugins page) -->
     <depends>com.intellij.modules.platform</depends>
@@ -16,7 +71,7 @@
         <action id="AdSetupWizardAction"
                 class="org.viw.adintegrationpro.AdSetupWizardAction"
                 text="Ad Integration Assistant"
-                description="Step-by-step wizard to integrate ads into your Android project">
+                description="Easily integrate ads (AdMob, Unity Ads, Facebook Audience, IronSource) into your Android projects. Configure Gradle, Manifest, and helper classes in just a few clicks.">
             <add-to-group group-id="ToolsMenu" anchor="last"/>
         </action>
     </actions>

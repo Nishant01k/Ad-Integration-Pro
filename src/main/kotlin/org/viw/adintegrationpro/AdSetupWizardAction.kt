@@ -81,7 +81,8 @@ class AdSetupWizardAction : AnAction() {
                         FileModifier.updateManifest(project, selectedProvider)
 
                         // ✅ Generate Helper Classes
-                        HelperFileGenerator.generateHelpers(project)
+                        HelperFileGenerator.generateHelper(project, selectedProvider, selectedFormats)
+
 
                         // Debug log
                         println("Provider: $selectedProvider")
