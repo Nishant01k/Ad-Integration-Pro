@@ -5,7 +5,7 @@ plugins {
 }
 
 group = "org.viw"
-version = "1.1.1"
+version = "2026.1.1"
 
 repositories {
     mavenCentral()
@@ -28,6 +28,8 @@ dependencies {
 }
 
 intellijPlatform {
+    instrumentCode.set(false)
+
     pluginConfiguration {
         ideaVersion {
             sinceBuild = "251"
@@ -38,7 +40,6 @@ intellijPlatform {
         """.trimIndent()
     }
 }
-
 tasks {
     // Set the JVM compatibility versions
     withType<JavaCompile> {

@@ -1,8 +1,16 @@
 <idea-plugin>
     <id>org.viw.AdIntegrationPro</id>
     <name>Ad Integration Pro</name>
-    <version>1.1.1</version>
+    <version>2026.1.1</version>
     <vendor email="chaudharysantosh03k@gmail.com" url="https://nishant01k.github.io/Ad-Integration-Pro/">Santosh Kumar Chaudhary</vendor>
+
+
+    <product-descriptor
+        code="PADINTEGRATIONP"
+        release-date="20260815"
+        release-version="20261"
+        optional="true"/>
+
 
     <description><![CDATA[
         <h2 style="margin-top:0;">Ad Integration Pro</h2>
@@ -50,6 +58,27 @@
             <li>Minimum Android SDK 21</li>
         </ul>
 
+        <h3>Free Features</h3>
+
+        <ul>
+            <li>Google AdMob</li>
+            <li>Banner Ads</li>
+            <li>Interstitial Ads</li>
+            <li>Automatic Gradle setup</li>
+            <li>Automatic Manifest setup</li>
+            <li>Java/Kotlin helper generation</li>
+        </ul>
+
+        <h3>Pro Features</h3>
+
+        <ul>
+            <li>Unity Ads</li>
+            <li>Facebook Audience Network</li>
+            <li>IronSource</li>
+            <li>Rewarded Ads</li>
+            <li>Native Ads</li>
+        </ul>
+
         <h3>Support</h3>
         <p>If you need help or want to suggest new ad networks, contact:
         <a href="mailto:chaudharysantosh03k@gmail.com">chaudharysantosh03k@gmail.com</a></p>
@@ -69,10 +98,23 @@
 
     <actions>
         <action id="AdSetupWizardAction"
-                class="org.viw.adintegrationpro.AdSetupWizardAction"
+                class="org.viw.adintegrationpro.actions.AdSetupWizardAction"
                 text="Ad Integration Assistant"
                 description="Easily integrate ads (AdMob, Unity Ads, Facebook Audience, IronSource) into your Android projects. Configure Gradle, Manifest, and helper classes in just a few clicks.">
             <add-to-group group-id="ToolsMenu" anchor="last"/>
+
+        </action>
+
+        <action
+            id="org.viw.adintegrationpro.UpgradeAction"
+            class="org.viw.adintegrationpro.actions.UpgradeAction"
+            text="Ad Integration Pro — Upgrade"
+            description="Upgrade to Ad Integration Pro Pro features.">
+
+            <add-to-group
+                group-id="ToolsMenu"
+                anchor="last"/>
+
         </action>
     </actions>
 </idea-plugin>

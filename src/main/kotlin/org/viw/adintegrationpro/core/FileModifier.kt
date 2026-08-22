@@ -1,8 +1,8 @@
-package org.viw.adintegrationpro
+package org.viw.adintegrationpro.core
 
-import com.intellij.openapi.vfs.VfsUtil
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VfsUtil
 
 object FileModifier {
 
