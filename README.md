@@ -16,8 +16,11 @@
   <img src="https://img.shields.io/badge/license-Apache%202.0-informational" alt="License">
 </p>
 
+
 <p align="center">
-  <a href="https://plugins.jetbrains.com/plugin/28580-ad-integration-pro"><strong>Install from JetBrains Marketplace →</strong></a>
+  <a href="https://plugins.jetbrains.com/plugin/28580-ad-integration-pro">
+    <img src="docs/images/download.png" height="80" alt="Download Ad Integration Pro from JetBrains Marketplace" />
+  </a>
 </p>
 
 ---
