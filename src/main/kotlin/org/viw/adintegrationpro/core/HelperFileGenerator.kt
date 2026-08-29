@@ -15,7 +15,8 @@ object HelperFileGenerator {
         WriteCommandAction.runWriteCommandAction(project) {
             try {
                 val basePath = project.basePath ?: return@runWriteCommandAction
-                val baseDir = VfsUtil.findFile(File(basePath).toPath(), true) ?: return@runWriteCommandAction
+                val baseDir =
+                    VfsUtil.findFile(File(basePath).toPath(), true) ?: return@runWriteCommandAction
 
                 // Generate in a fixed package
                 val packageDir = VfsUtil.createDirectoryIfMissing(
@@ -24,7 +25,10 @@ object HelperFileGenerator {
                 ) ?: return@runWriteCommandAction
 
                 val fileName = if (isKotlin) "AdHelper.kt" else "AdHelper.java"
-                val content = if (isKotlin) buildKotlinHelper(provider, formats) else buildJavaHelper(provider, formats)
+                val content = if (isKotlin) buildKotlinHelper(
+                    provider,
+                    formats
+                ) else buildJavaHelper(provider, formats)
 
                 createOrUpdateFile(packageDir, fileName, content)
 
@@ -168,9 +172,53 @@ object HelperFileGenerator {
 
     private fun isKotlinProject(project: Project): Boolean {
         val basePath = project.basePath ?: return false
-        val srcDir = File(basePath, "app/src/main/java")
-        if (!srcDir.exists()) return false
+        val projectDir = File(basePath)
 
-        return srcDir.walkTopDown().any { it.extension == "kt" }
+        // Look for Kotlin source files in the Android app module first
+        val appSrc = File(projectDir, "app/src")
+
+        if (appSrc.exists()) {
+            val hasKotlinFiles =
+                appSrc.walkTopDown()
+                    .any {
+                        it.isFile &&
+                                it.extension.equals("kt", ignoreCase = true)
+                    }
+
+            if (hasKotlinFiles) {
+                return true
+            }
+        }
+
+        // Check the entire project as a fallback
+        val hasKotlinFilesAnywhere =
+            projectDir.walkTopDown()
+                .maxDepth(8)
+                .any {
+                    it.isFile &&
+                            it.extension.equals("kt", ignoreCase = true)
+                }
+
+        if (hasKotlinFilesAnywhere) {
+            return true
+        }
+
+        // Check Kotlin DSL / Kotlin Android configuration
+        val appBuildKts =
+            File(projectDir, "app/build.gradle.kts")
+
+        if (appBuildKts.exists()) {
+            val text = appBuildKts.readText()
+
+            if (
+                text.contains("org.jetbrains.kotlin.android") ||
+                text.contains("kotlin(\"android\")") ||
+                text.contains("kotlin-android")
+            ) {
+                return true
+            }
+        }
+
+        return false
     }
 }

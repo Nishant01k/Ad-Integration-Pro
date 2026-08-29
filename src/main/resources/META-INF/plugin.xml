@@ -1,7 +1,7 @@
 <idea-plugin>
     <id>org.viw.AdIntegrationPro</id>
     <name>Ad Integration Pro</name>
-    <version>2026.1.1</version>
+    <version>2026.1.2</version>
     <vendor email="chaudharysantosh03k@gmail.com" url="https://nishant01k.github.io/Ad-Integration-Pro/">Santosh Kumar Chaudhary</vendor>
 
 
@@ -100,17 +100,7 @@
         <action id="AdSetupWizardAction"
                 class="org.viw.adintegrationpro.actions.AdSetupWizardAction"
                 text="Ad Integration Assistant"
-                description="Easily integrate ads (AdMob, Unity Ads, Facebook Audience, IronSource) into your Android projects. Configure Gradle, Manifest, and helper classes in just a few clicks.">
-            <add-to-group group-id="ToolsMenu" anchor="last"/>
-
-        </action>
-
-        <action
-            id="org.viw.adintegrationpro.UpgradeAction"
-            class="org.viw.adintegrationpro.actions.UpgradeAction"
-            text="Ad Integration Pro — Upgrade"
-            description="Upgrade to Ad Integration Pro Pro features.">
-
+                description="Configure Android ad networks, Gradle dependencies, Manifest entries, and helper classes from the IDE.">
             <add-to-group
                 group-id="ToolsMenu"
                 anchor="last"/>

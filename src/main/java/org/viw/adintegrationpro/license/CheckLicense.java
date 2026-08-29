@@ -1,7 +1,6 @@
 package org.viw.adintegrationpro.license;
 
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.ui.LicensingFacade;
@@ -15,17 +14,22 @@ import java.security.cert.*;
 import java.util.*;
 
 public class CheckLicense {
+
     /**
-     * PRODUCT_CODE must be the same specified in plugin.xml inside the <product-descriptor> tag
+     * Must be exactly the same product code that is configured
+     * in plugin.xml inside <product-descriptor>.
      */
     private static final String PRODUCT_CODE = "PADINTEGRATIONP";
+
     private static final String KEY_PREFIX = "key:";
     private static final String STAMP_PREFIX = "stamp:";
 
     /**
-     * Public root certificates needed to verify JetBrains-signed licenses
+     * JetBrains public root certificates used for
+     * verifying JetBrains-signed licenses.
      */
     private static final String[] ROOT_CERTIFICATES = new String[]{
+
             "-----BEGIN CERTIFICATE-----\n" +
                     "MIIFOzCCAyOgAwIBAgIJANJssYOyg3nhMA0GCSqGSIb3DQEBCwUAMBgxFjAUBgNV\n" +
                     "BAMMDUpldFByb2ZpbGUgQ0EwHhcNMTUxMDAyMTEwMDU2WhcNNDUxMDI0MTEwMDU2\n" +
@@ -56,6 +60,7 @@ public class CheckLicense {
                     "0rn+cgvxHPt6N4EBh5GgNZR4l0eaFEV+fxVsydOQYo1RIyFMXtafFBqQl6DDxujl\n" +
                     "FeU3FZ+Bcp12t7dlM4E0/sS1XdL47CfGVj4Bp+/VbF862HmkAbd7shs7sDQkHbU=\n" +
                     "-----END CERTIFICATE-----\n",
+
             "-----BEGIN CERTIFICATE-----\n" +
                     "MIIFTDCCAzSgAwIBAgIJAMCrW9HV+hjZMA0GCSqGSIb3DQEBCwUAMB0xGzAZBgNV\n" +
                     "BAMMEkxpY2Vuc2UgU2VydmVycyBDQTAgFw0xNjEwMTIxNDMwNTRaGA8yMTE2MTIy\n" +
@@ -92,193 +97,551 @@ public class CheckLicense {
     private static final long SECOND = 1000;
     private static final long MINUTE = 60 * SECOND;
     private static final long HOUR = 60 * MINUTE;
-    private static final long TIMESTAMP_VALIDITY_PERIOD_MS = 1 * HOUR;  // configure period that suits your needs better
-
 
     /**
-     * @return TRUE if licensed, FALSE otherwise.
-     * Null return value means the LicensingFacade object is not initialized yet => one cannot say for sure does a valid license for the plugin exist or not.
-     * The interpretation of the null value is up to plugin.
+     * License server timestamps older than this are rejected.
+     */
+    private static final long TIMESTAMP_VALIDITY_PERIOD_MS = HOUR;
+
+    /**
+     * Checks whether Ad Integration Pro currently has
+     * a valid JetBrains Marketplace license.
+     *
+     * @return TRUE  = valid license
+     *         FALSE = no valid license
+     *         NULL  = JetBrains LicensingFacade is not initialized yet
      */
     @Nullable
     public static Boolean isLicensed() {
-        final LicensingFacade facade = LicensingFacade.getInstance();
+
+        final LicensingFacade facade =
+                LicensingFacade.getInstance();
+
         if (facade == null) {
             return null;
         }
-        final String cstamp = facade.getConfirmationStamp(PRODUCT_CODE);
-        if (cstamp == null) {
+
+        final String confirmationStamp =
+                facade.getConfirmationStamp(PRODUCT_CODE);
+
+        if (confirmationStamp == null) {
             return false;
         }
-        if (cstamp.startsWith(KEY_PREFIX)) {
-            // the license is obtained via JetBrainsAccount or entered as an activation code
-            return isKeyValid(cstamp.substring(KEY_PREFIX.length()));
-        }
-        if (cstamp.startsWith(STAMP_PREFIX)) {
-            // licensed via ticket obtained from JetBrains Floating License Server
-            return isLicenseServerStampValid(cstamp.substring(STAMP_PREFIX.length()));
-        }
-        return false;
-    }
 
-    public static void requestLicense(final String message) {
-        // ensure the dialog is appeared from UI thread and in a non-modal context
-        ApplicationManager.getApplication().invokeLater(() -> showRegisterDialog("PMAKECOFFEE", message), ModalityState.nonModal());
-    }
+        /*
+         * JetBrains Account / activation-code license.
+         */
+        if (confirmationStamp.startsWith(KEY_PREFIX)) {
 
-    private static void showRegisterDialog(final String productCode, final String message) {
-        final com.intellij.openapi.actionSystem.ActionManager actionManager = com.intellij.openapi.actionSystem.ActionManager.getInstance();
-        // first, assume we are running inside the opensource version
-        AnAction registerAction = actionManager.getAction("RegisterPlugins");
-        if (registerAction == null) {
-            // assume running inside commercial IDE distribution
-            registerAction = actionManager.getAction("Register");
-        }
-        if (registerAction != null) {
-            // This API is available starting from IDE version 243.*.
-            // For older IDE versions, use: registerAction.actionPerformed(AnActionEvent.createFromDataContext("", new Presentation(), asDataContext(productCode, message)))
-            registerAction.actionPerformed(
-                    AnActionEvent.createEvent(
-                            asDataContext(productCode, message),
-                            new Presentation(),
-                            "",
-                            ActionUiKind.NONE,
-                            null
+            return isKeyValid(
+                    confirmationStamp.substring(
+                            KEY_PREFIX.length()
                     )
             );
         }
+
+        /*
+         * Floating License Server license.
+         */
+        if (confirmationStamp.startsWith(STAMP_PREFIX)) {
+
+            return isLicenseServerStampValid(
+                    confirmationStamp.substring(
+                            STAMP_PREFIX.length()
+                    )
+            );
+        }
+
+        return false;
     }
 
-    // This creates a DataContext providing additional information for the license UI
-    // The "Register*" actions show the registration dialog and expect to find this additional data in the DataContext passed to the action
-    // - productCode: the product corresponding to the passed productCode will be pre-selected in the opened dialog
-    // - message: optional message explaining the reason why the dialog has been shown
-    @NotNull
-    private static DataContext asDataContext(final String productCode, @Nullable String message) {
-        return dataId -> switch (dataId) {
-            // the same code as registered in plugin.xml, 'product-descriptor' tag
-            case "register.product-descriptor.code" -> productCode;
+    /**
+     * Optional helper.
+     *
+     * Opens JetBrains' built-in license UI when it is
+     * available in the current IDE.
+     *
+     * Your new Buy Pro browser flow does not depend on
+     * this method, but keeping it gives us a fallback.
+     */
+    public static void requestLicense(
+            final String message
+    ) {
 
-            // optional message to be shown in the registration dialog that appears
-            case "register.message" -> message;
-            default -> null;
+        ApplicationManager
+                .getApplication()
+                .invokeLater(
+                        () -> showRegisterDialog(
+                                PRODUCT_CODE,
+                                message
+                        ),
+                        ModalityState.nonModal()
+                );
+    }
+
+    /**
+     * Attempts to open JetBrains' built-in registration /
+     * license management action.
+     */
+    private static void showRegisterDialog(
+            final String productCode,
+            final String message
+    ) {
+
+        final ActionManager actionManager =
+                ActionManager.getInstance();
+
+        /*
+         * Often available in open-source based products /
+         * Android Studio.
+         */
+        AnAction registerAction =
+                actionManager.getAction(
+                        "RegisterPlugins"
+                );
+
+        /*
+         * Commercial JetBrains IDE fallback.
+         */
+        if (registerAction == null) {
+
+            registerAction =
+                    actionManager.getAction(
+                            "Register"
+                    );
+        }
+
+        /*
+         * Some IDE distributions may not expose either
+         * registration action.
+         *
+         * In that situation we simply do nothing here.
+         * The normal Buy Pro browser flow still works.
+         */
+        if (registerAction == null) {
+            return;
+        }
+
+        registerAction.actionPerformed(
+                AnActionEvent.createEvent(
+                        asDataContext(
+                                productCode,
+                                message
+                        ),
+                        new Presentation(),
+                        "",
+                        ActionUiKind.NONE,
+                        null
+                )
+        );
+    }
+
+    /**
+     * Supplies the product code and optional message
+     * to JetBrains' built-in registration action.
+     */
+    @NotNull
+    private static DataContext asDataContext(
+            final String productCode,
+            @Nullable final String message
+    ) {
+
+        return dataId -> switch (dataId) {
+
+            case "register.product-descriptor.code" ->
+                    productCode;
+
+            case "register.message" ->
+                    message;
+
+            default ->
+                    null;
         };
     }
 
-    private static boolean isKeyValid(String key) {
-        String[] licenseParts = key.split("-");
-        if (licenseParts.length !=  4) {
-            return false; // invalid format
+    /**
+     * Validates JetBrains Marketplace activation keys.
+     */
+    private static boolean isKeyValid(
+            final String key
+    ) {
+
+        final String[] licenseParts =
+                key.split("-");
+
+        if (licenseParts.length != 4) {
+            return false;
         }
 
-        final String licenseId = licenseParts[0];
-        final String licensePartBase64 = licenseParts[1];
-        final String signatureBase64 = licenseParts[2];
-        final String certBase64 = licenseParts[3];
+        final String licenseId =
+                licenseParts[0];
+
+        final String licensePartBase64 =
+                licenseParts[1];
+
+        final String signatureBase64 =
+                licenseParts[2];
+
+        final String certBase64 =
+                licenseParts[3];
 
         try {
-            final Signature sig = Signature.getInstance("SHA1withRSA");
-            // the last parameter of 'createCertificate()' set to 'false' switches off certificate expiration checks.
-            // This might be the case if the key is at the same time a perpetual fallback license for older IDE versions.
-            // Here it is only important that the key was signed with an authentic JetBrains certificate.
-            sig.initVerify(createCertificate(
-                    Base64.getMimeDecoder().decode(certBase64.getBytes(StandardCharsets.UTF_8)), Collections.emptySet(), false
-            ));
-            final byte[] licenseBytes = Base64.getMimeDecoder().decode(licensePartBase64.getBytes(StandardCharsets.UTF_8));
-            sig.update(licenseBytes);
-            if (!sig.verify(Base64.getMimeDecoder().decode(signatureBase64.getBytes(StandardCharsets.UTF_8)))) {
+
+            final Signature signature =
+                    Signature.getInstance(
+                            "SHA1withRSA"
+                    );
+
+            /*
+             * Certificate expiration checking is disabled
+             * here because a license may also represent a
+             * perpetual fallback license.
+             */
+            signature.initVerify(
+                    createCertificate(
+                            Base64
+                                    .getMimeDecoder()
+                                    .decode(
+                                            certBase64.getBytes(
+                                                    StandardCharsets.UTF_8
+                                            )
+                                    ),
+                            Collections.emptySet(),
+                            false
+                    )
+            );
+
+            final byte[] licenseBytes =
+                    Base64
+                            .getMimeDecoder()
+                            .decode(
+                                    licensePartBase64.getBytes(
+                                            StandardCharsets.UTF_8
+                                    )
+                            );
+
+            signature.update(
+                    licenseBytes
+            );
+
+            final boolean signatureValid =
+                    signature.verify(
+                            Base64
+                                    .getMimeDecoder()
+                                    .decode(
+                                            signatureBase64.getBytes(
+                                                    StandardCharsets.UTF_8
+                                            )
+                                    )
+                    );
+
+            if (!signatureValid) {
                 return false;
             }
-            // Optional additional check: the licenseId corresponds to the licenseId encoded in the signed license data
-            // The following is a 'least-effort' code. It would be more accurate to parse json and then find there the value of the attribute "licenseId"
-            final String licenseData = new String(licenseBytes, StandardCharsets.UTF_8);
-            return licenseData.contains("\"licenseId\":\"" + licenseId + "\"");
-        }
-        catch (Throwable e) {
-            e.printStackTrace(); // For debug purposes only. Normally you will not want to print exception's trace to console
-        }
-        return false;
-    }
 
-    private static boolean isLicenseServerStampValid(String serverStamp) {
-        try {
-            final String[] parts = serverStamp.split(":");
-            final Base64.Decoder base64 = Base64.getMimeDecoder();
+            /*
+             * Verify that the license ID outside the signed
+             * payload matches the license ID in the signed data.
+             */
+            final String licenseData =
+                    new String(
+                            licenseBytes,
+                            StandardCharsets.UTF_8
+                    );
 
-            final String expectedMachineId = parts[0];
-            final long timeStamp = Long.parseLong(parts[1]);
-            final String machineId = parts[2];
-            final String signatureType = parts[3];
-            final byte[] signatureBytes = base64.decode(parts[4].getBytes(StandardCharsets.UTF_8));
-            final byte[] certBytes = base64.decode(parts[5].getBytes(StandardCharsets.UTF_8));
-            final Collection<byte[]> intermediate = new ArrayList<>();
-            for (int idx = 6; idx < parts.length; idx++) {
-                intermediate.add(base64.decode(parts[idx].getBytes(StandardCharsets.UTF_8)));
-            }
-
-            final Signature sig = Signature.getInstance(signatureType);
-
-            // the last parameter of 'createCertificate()' set to 'true' causes the certificate to be checked for
-            // expiration. Expired certificates from a license server cannot be trusted
-            sig.initVerify(createCertificate(certBytes, intermediate, true));
-
-            sig.update((timeStamp + ":" + machineId).getBytes(StandardCharsets.UTF_8));
-            if (sig.verify(signatureBytes)) {
-                // machineId must match the machineId from the server reply and
-                // server reply should be relatively 'fresh'
-                return expectedMachineId.equals(machineId) && Math.abs(System.currentTimeMillis() - timeStamp) < TIMESTAMP_VALIDITY_PERIOD_MS;
-            }
-        }
-        catch (Throwable ignored) {
-            // consider serverStamp invalid
-        }
-        return false;
-    }
-
-    @NotNull
-    private static X509Certificate createCertificate(byte[] certBytes, Collection<byte[]> intermediateCertsBytes, boolean checkValidityAtCurrentDate) throws Exception {
-        final CertificateFactory x509factory = CertificateFactory.getInstance("X.509");
-        final X509Certificate cert = (X509Certificate) x509factory.generateCertificate(new ByteArrayInputStream(certBytes));
-
-        final Collection<Certificate> allCerts = new HashSet<>();
-        allCerts.add(cert);
-        for (byte[] bytes : intermediateCertsBytes) {
-            allCerts.add(x509factory.generateCertificate(new ByteArrayInputStream(bytes)));
-        }
-
-        try {
-            // Create the selector that specifies the starting certificate
-            final X509CertSelector selector = new X509CertSelector();
-            selector.setCertificate(cert);
-            // Configure the PKIX certificate builder algorithm parameters
-            final Set<TrustAnchor> trustAchors = new HashSet<>();
-            for (String rc : ROOT_CERTIFICATES) {
-                trustAchors.add(new TrustAnchor(
-                        (X509Certificate) x509factory.generateCertificate(new ByteArrayInputStream(rc.getBytes(StandardCharsets.UTF_8))), null
-                ));
-            }
-
-            final PKIXBuilderParameters pkixParams = new PKIXBuilderParameters(trustAchors, selector);
-            pkixParams.setRevocationEnabled(false);
-            if (!checkValidityAtCurrentDate) {
-                // deliberately check validity on the start date of cert validity period, so that we do not depend on
-                // the actual moment when the check is performed
-                pkixParams.setDate(cert.getNotBefore());
-            }
-            pkixParams.addCertStore(
-                    CertStore.getInstance("Collection", new CollectionCertStoreParameters(allCerts))
+            return licenseData.contains(
+                    "\"licenseId\":\""
+                            + licenseId
+                            + "\""
             );
-            // Build and verify the certification chain
-            final CertPath path = CertPathBuilder.getInstance("PKIX").build(pkixParams).getCertPath();
-            if (path != null) {
-                CertPathValidator.getInstance("PKIX").validate(path, pkixParams);
-                return cert;
-            }
+
+        } catch (Throwable ignored) {
+
+            /*
+             * Invalid / malformed license.
+             */
+            return false;
         }
-        catch (Exception e) {
-            // debug the reason here
-        }
-        throw new Exception ("Certificate used to sign the license is not signed by JetBrains root certificate");
     }
 
+    /**
+     * Validates a confirmation stamp received from a
+     * JetBrains Floating License Server.
+     */
+    private static boolean isLicenseServerStampValid(
+            final String serverStamp
+    ) {
+
+        try {
+
+            final String[] parts =
+                    serverStamp.split(":");
+
+            /*
+             * Required:
+             * machineId
+             * timestamp
+             * actual machineId
+             * signature algorithm
+             * signature
+             * certificate
+             */
+            if (parts.length < 6) {
+                return false;
+            }
+
+            final Base64.Decoder base64 =
+                    Base64.getMimeDecoder();
+
+            final String expectedMachineId =
+                    parts[0];
+
+            final long timeStamp =
+                    Long.parseLong(
+                            parts[1]
+                    );
+
+            final String machineId =
+                    parts[2];
+
+            final String signatureType =
+                    parts[3];
+
+            final byte[] signatureBytes =
+                    base64.decode(
+                            parts[4].getBytes(
+                                    StandardCharsets.UTF_8
+                            )
+                    );
+
+            final byte[] certBytes =
+                    base64.decode(
+                            parts[5].getBytes(
+                                    StandardCharsets.UTF_8
+                            )
+                    );
+
+            final Collection<byte[]>
+                    intermediateCertificates =
+                    new ArrayList<>();
+
+            for (
+                    int index = 6;
+                    index < parts.length;
+                    index++
+            ) {
+
+                intermediateCertificates.add(
+                        base64.decode(
+                                parts[index].getBytes(
+                                        StandardCharsets.UTF_8
+                                )
+                        )
+                );
+            }
+
+            final Signature signature =
+                    Signature.getInstance(
+                            signatureType
+                    );
+
+            /*
+             * Floating-license certificates are checked
+             * against their current validity period.
+             */
+            signature.initVerify(
+                    createCertificate(
+                            certBytes,
+                            intermediateCertificates,
+                            true
+                    )
+            );
+
+            signature.update(
+                    (
+                            timeStamp
+                                    + ":"
+                                    + machineId
+                    ).getBytes(
+                            StandardCharsets.UTF_8
+                    )
+            );
+
+            if (!signature.verify(
+                    signatureBytes
+            )) {
+                return false;
+            }
+
+            /*
+             * Verify machine identity.
+             */
+            if (!expectedMachineId.equals(
+                    machineId
+            )) {
+                return false;
+            }
+
+            /*
+             * The Floating License Server stamp must
+             * also be recent.
+             */
+            return Math.abs(
+                    System.currentTimeMillis()
+                            - timeStamp
+            ) < TIMESTAMP_VALIDITY_PERIOD_MS;
+
+        } catch (Throwable ignored) {
+
+            return false;
+        }
+    }
+
+    /**
+     * Builds and validates the JetBrains certificate chain.
+     */
+    @NotNull
+    private static X509Certificate createCertificate(
+            final byte[] certBytes,
+            final Collection<byte[]>
+                    intermediateCertsBytes,
+            final boolean
+                    checkValidityAtCurrentDate
+    ) throws Exception {
+
+        final CertificateFactory factory =
+                CertificateFactory.getInstance(
+                        "X.509"
+                );
+
+        final X509Certificate certificate =
+                (X509Certificate)
+                        factory.generateCertificate(
+                                new ByteArrayInputStream(
+                                        certBytes
+                                )
+                        );
+
+        final Collection<Certificate>
+                allCertificates =
+                new HashSet<>();
+
+        allCertificates.add(
+                certificate
+        );
+
+        for (
+                byte[] bytes :
+                intermediateCertsBytes
+        ) {
+
+            allCertificates.add(
+                    factory.generateCertificate(
+                            new ByteArrayInputStream(
+                                    bytes
+                            )
+                    )
+            );
+        }
+
+        try {
+
+            final X509CertSelector selector =
+                    new X509CertSelector();
+
+            selector.setCertificate(
+                    certificate
+            );
+
+            final Set<TrustAnchor>
+                    trustAnchors =
+                    new HashSet<>();
+
+            for (
+                    String rootCertificate :
+                    ROOT_CERTIFICATES
+            ) {
+
+                final X509Certificate root =
+                        (X509Certificate)
+                                factory.generateCertificate(
+                                        new ByteArrayInputStream(
+                                                rootCertificate.getBytes(
+                                                        StandardCharsets.UTF_8
+                                                )
+                                        )
+                                );
+
+                trustAnchors.add(
+                        new TrustAnchor(
+                                root,
+                                null
+                        )
+                );
+            }
+
+            final PKIXBuilderParameters parameters =
+                    new PKIXBuilderParameters(
+                            trustAnchors,
+                            selector
+                    );
+
+            parameters.setRevocationEnabled(
+                    false
+            );
+
+            /*
+             * For activation keys, validate the chain using
+             * the certificate start date rather than today.
+             *
+             * This allows perpetual fallback licenses whose
+             * signing certificate has since expired.
+             */
+            if (!checkValidityAtCurrentDate) {
+
+                parameters.setDate(
+                        certificate.getNotBefore()
+                );
+            }
+
+            parameters.addCertStore(
+                    CertStore.getInstance(
+                            "Collection",
+                            new CollectionCertStoreParameters(
+                                    allCertificates
+                            )
+                    )
+            );
+
+            final CertPath certPath =
+                    CertPathBuilder
+                            .getInstance(
+                                    "PKIX"
+                            )
+                            .build(
+                                    parameters
+                            )
+                            .getCertPath();
+
+            CertPathValidator
+                    .getInstance(
+                            "PKIX"
+                    )
+                    .validate(
+                            certPath,
+                            parameters
+                    );
+
+            return certificate;
+
+        } catch (Exception exception) {
+
+            throw new Exception(
+                    "Certificate used to sign the license " +
+                            "is not signed by a trusted " +
+                            "JetBrains root certificate.",
+                    exception
+            );
+        }
+    }
 }
